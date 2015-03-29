@@ -4,7 +4,6 @@ var UbuntuMono = function( path ){
   var texture = new THREE.ImageUtils.loadTexture( path );
   texture.flipY = false;
         
-
   return {
 
     texture:   texture,

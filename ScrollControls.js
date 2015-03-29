@@ -4,7 +4,7 @@ function ScrollControls( camera , params ){
   this.camera     = camera;
   var params      = params || {};
 
-  this.dampening  = params.dampening  || .99;
+  this.dampening  = params.dampening  || .9;
   this.minPos     = params.minPos     || -1000;
   this.maxPos     = params.maxPos     ||  0; 
   this.multiplier = params.multiplier || .01;

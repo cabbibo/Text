@@ -13,10 +13,12 @@
     this.texture = this.font.texture; 
     
     this.letterWidth    = params.letterWidth    || .02;
-    this.lineHeight     = params.lineHeight     || .05;
     this.lineLength     = params.lineLength     || 50;
     
-    this.width = this.letterWidth * this.lineLength; 
+    this.lineHeight = this.letterWidth * 2.4;
+
+    
+    this.width = this.letterWidth * this.lineLength ; 
 
     var particles = this.createTextParticles( string , params );
 
@@ -34,12 +36,19 @@
   
     var material  = this.createMaterial(  lookup , params );
 
-    var particleSystem = new THREE.PointCloud( geometry , material );
+    var particleSystem = new THREE.Mesh( geometry , material );
 
     particleSystem.frustumCulled = false; 
     this.lookupTexture = lookup;
 
     particleSystem.size = lookup.size;
+    particleSystem.lookup = lookup;
+    particleSystem.debug = new THREE.Mesh( 
+        new THREE.PlaneBufferGeometry( 1 , 1 ) ,
+        new THREE.MeshBasicMaterial({
+          map: lookup
+        })
+    );
 
     var lines =  Math.ceil( particles.length / this.lineLength );
 
@@ -79,6 +88,7 @@
       counter[0] = 0;
       counter[1] ++;
 
+
       var wordArray = lineArray[i].split(" ");
 
       for( var j = 0; j < wordArray.length; j++ ){
@@ -90,6 +100,7 @@
         // Makes sure we don't go over line width
         var newL = counter[0] + l;
         if( newL > this.lineLength ){
+          console.log( 'new line');
           counter[0] = 0;
           counter[1] ++;
         }
@@ -129,12 +140,30 @@
     var data = new Float32Array( size * size * 4 );
 
     console.log( this.letterWidth );
-    for( var i = 0; i < size*size; i++ ){
+
+    console.log( size );
+
+    for( var i = 0; i < particles.length; i++ ){
+      var p1 = particles[i]
+      for( var j = i+1; j < particles.length; j++ ){
+        var p2 = particles[j];
+
+        if( p1[1] == p2[1] && p1[2] == p2[2] ){
+          console.log( 'WTF' );
+          console.log( p1 );
+          console.log( p2 );
+        }
+
+      }
+    }
+    for( var i = 0; i < size * size; i++ ){
 
       if( particles[i] ){
-      
-        data[ i * 4 + 0 ] = particles[i][1] * this.letterWidth * .8;
-        data[ i * 4 + 1 ] = -particles[i][2] * this.lineHeight;
+     
+
+        data[ i * 4 + 0 ] =   particles[i][1] * this.letterWidth * .8;
+        data[ i * 4 + 1 ] =  -particles[i][2] * this.lineHeight;
+
         data[ i * 4 + 2 ] = 0; // packing in textCoord 
         data[ i * 4 + 3 ] = 0; // just cuz!
 
@@ -159,19 +188,28 @@
   }
 
 
-  TextParticles.prototype.createGeometry = function( particles , lookup ){
+  TextParticles.prototype.createGeometry = function( particles ){
 
     var geometry = new THREE.BufferGeometry();
  
-    var positions   = new Float32Array( particles.length * 3 );
-  	var textCoords  = new Float32Array( particles.length * 4 );
-  	var textOffsets = new Float32Array( particles.length * 2 );
+    var positions   = new Float32Array( particles.length * 3 * 2 * 3 );
+    var uvs         = new Float32Array( particles.length * 3 * 2 * 2 );
+    var ids         = new Float32Array( particles.length * 3 * 2 * 1 );
+  	var textCoords  = new Float32Array( particles.length * 3 * 2 * 4 );
+  	var textOffsets = new Float32Array( particles.length * 3 * 2 * 2 );
+  	var lookups     = new Float32Array( particles.length * 3 * 2 * 2 );
 
 
+    var uvA     = new THREE.BufferAttribute( uvs         , 2 );
+    var idA     = new THREE.BufferAttribute( ids         , 1 );
     var posA    = new THREE.BufferAttribute( positions   , 3 );
     var coordA  = new THREE.BufferAttribute( textCoords  , 4 );
     var offsetA = new THREE.BufferAttribute( textOffsets , 2 );
+    var lookupA = new THREE.BufferAttribute( lookups     , 2 );
     
+    geometry.addAttribute( 'id'         , idA     ); 
+    geometry.addAttribute( 'uv'         , uvA     ); 
+    geometry.addAttribute( 'lookup'     , lookupA ); 
     geometry.addAttribute( 'position'   , posA    ); 
     geometry.addAttribute( 'textCoord'  , coordA  ); 
     geometry.addAttribute( 'textOffset' , offsetA );
@@ -180,35 +218,160 @@
 
 
     for( var i = 0; i < particles.length; i++ ){
+       
+      var index = i * 3 * 2;
+
+   
+      var tc = this.getTextCoordinates( particles[i][0] );
+
+      // Left is offset
+      var l = tc[4];
+
+      // Right is offset + width
+      var r = tc[4] + tc[2];
+
+      // bottom is y offset
+      var b = tc[5] ;
+
+      // top is y offset + height
+      var t =  tc[5] + tc[3];
+
+
+
+      /*var l = -1  * .04;
+      var r =  1  * .04;
+      var t =  1  * .04;
+      var b = -1  * .04;*/
+
+      ids[ index + 0 ] = i;
+      ids[ index + 1 ] = i;
+      ids[ index + 2 ] = i;
+      ids[ index + 3 ] = i;
+      ids[ index + 4 ] = i;
+      ids[ index + 5 ] = i;
+
+      //console.log( x + " , " + y );
+      positions[ index * 3 + 0  ] = l * this.letterWidth * 10;
+      positions[ index * 3 + 1  ] = t * this.letterWidth * 10; 
+      positions[ index * 3 + 2  ] = 0 * this.letterWidth * 10; 
       
-      if( lookup ){
+      positions[ index * 3 + 3  ] = l * this.letterWidth * 10;
+      positions[ index * 3 + 4  ] = b * this.letterWidth * 10; 
+      positions[ index * 3 + 5  ] = 0 * this.letterWidth * 10; 
+     
+      positions[ index * 3 + 6  ] = r * this.letterWidth * 10;
+      positions[ index * 3 + 7  ] = t * this.letterWidth * 10; 
+      positions[ index * 3 + 8  ] = 0 * this.letterWidth * 10; 
+      
+      positions[ index * 3 + 9  ] = r * this.letterWidth * 10;
+      positions[ index * 3 + 10 ] = b * this.letterWidth * 10; 
+      positions[ index * 3 + 11 ] = 0 * this.letterWidth * 10; 
+      
+      positions[ index * 3 + 12 ] = r * this.letterWidth * 10;
+      positions[ index * 3 + 13 ] = t * this.letterWidth * 10; 
+      positions[ index * 3 + 14 ] = 0 * this.letterWidth * 10; 
+       
+      positions[ index * 3 + 15 ] = l * this.letterWidth * 10;
+      positions[ index * 3 + 16 ] = b * this.letterWidth * 10; 
+      positions[ index * 3 + 17 ] = 0 * this.letterWidth * 10; 
 
-        var x =             i % lookupWidth   ;
-        var y = Math.floor( i / lookupWidth ) ;
 
-        //console.log( x + " , " + y );
-        positions[ i * 3 + 0 ] = x / lookupWidth;
-        positions[ i * 3 + 1 ] = y / lookupWidth; 
-        positions[ i * 3 + 2 ] = 0; 
+      uvs[ index * 2 + 0  ] = 0;
+      uvs[ index * 2 + 1  ] = 1; 
 
-      }else{
+      uvs[ index * 2 + 2  ] = 0;
+      uvs[ index * 2 + 3  ] = 0; 
+     
+      uvs[ index * 2 + 4  ] = 1;
+      uvs[ index * 2 + 5  ] = 1; 
+      
+      uvs[ index * 2 + 6  ] = 1;
+      uvs[ index * 2 + 7  ] = 0; 
+      
+      uvs[ index * 2 + 8  ] = 1;
+      uvs[ index * 2 + 9  ] = 1; 
+      
+      uvs[ index * 2 + 10 ] = 0;
+      uvs[ index * 2 + 11 ] = 0; 
 
-        positions[ i * 3 + 0 ] =  particles[i][1] * this.letterWidth;
-        positions[ i * 3 + 1 ] = -particles[i][2] * this.lineHeight; 
-        positions[ i * 3 + 2 ] = 0; 
 
-      }
-        
 
-      tc = this.getTextCoordinates( particles[i][0] );
+      // Gets the center of the particle
+      var x =             i % lookupWidth   ;
+      var y = Math.floor( i / lookupWidth ) ;
 
-      textCoords[  i * 4 + 0 ] = tc[0];
-      textCoords[  i * 4 + 1 ] = tc[1];
-      textCoords[  i * 4 + 2 ] = tc[2];
-      textCoords[  i * 4 + 3 ] = tc[3];
+      x += .5;
+      y += .5;
 
-      textOffsets[ i * 2 + 0 ] = tc[4];
-      textOffsets[ i * 2 + 1 ] = tc[5];
+
+      lookups[ index * 2 + 0  ] = x / lookupWidth;
+      lookups[ index * 2 + 1  ] = y / lookupWidth;
+
+      lookups[ index * 2 + 2  ] = x / lookupWidth;
+      lookups[ index * 2 + 3  ] = y / lookupWidth; 
+
+      lookups[ index * 2 + 4  ] = x / lookupWidth;
+      lookups[ index * 2 + 5  ] = y / lookupWidth;
+
+      lookups[ index * 2 + 6  ] = x / lookupWidth;
+      lookups[ index * 2 + 7  ] = y / lookupWidth;
+
+      lookups[ index * 2 + 8  ] = x / lookupWidth;
+      lookups[ index * 2 + 9  ] = y / lookupWidth;  
+
+      lookups[ index * 2 + 10 ] = x / lookupWidth;
+      lookups[ index * 2 + 11 ] = y / lookupWidth; 
+
+
+
+      textCoords[  index * 4 + 0  ] = tc[0];
+      textCoords[  index * 4 + 1  ] = tc[1];
+      textCoords[  index * 4 + 2  ] = tc[2];
+      textCoords[  index * 4 + 3  ] = tc[3];
+      
+      textCoords[  index * 4 + 4  ] = tc[0];
+      textCoords[  index * 4 + 5  ] = tc[1];
+      textCoords[  index * 4 + 6  ] = tc[2];
+      textCoords[  index * 4 + 7  ] = tc[3];
+      
+      textCoords[  index * 4 + 8  ] = tc[0];
+      textCoords[  index * 4 + 9  ] = tc[1];
+      textCoords[  index * 4 + 10 ] = tc[2];
+      textCoords[  index * 4 + 11 ] = tc[3];
+      
+      textCoords[  index * 4 + 12 ] = tc[0];
+      textCoords[  index * 4 + 13 ] = tc[1];
+      textCoords[  index * 4 + 14 ] = tc[2];
+      textCoords[  index * 4 + 15 ] = tc[3];
+      
+      textCoords[  index * 4 + 16 ] = tc[0];
+      textCoords[  index * 4 + 17 ] = tc[1];
+      textCoords[  index * 4 + 18 ] = tc[2];
+      textCoords[  index * 4 + 19 ] = tc[3];
+      
+      textCoords[  index * 4 + 20 ] = tc[0];
+      textCoords[  index * 4 + 21 ] = tc[1];
+      textCoords[  index * 4 + 22 ] = tc[2];
+      textCoords[  index * 4 + 23 ] = tc[3];
+
+
+      textOffsets[ index * 2 + 0  ] = tc[4];
+      textOffsets[ index * 2 + 1  ] = tc[5];
+
+      textOffsets[ index * 2 + 2  ] = tc[4];
+      textOffsets[ index * 2 + 3  ] = tc[5];
+
+      textOffsets[ index * 2 + 4  ] = tc[4];
+      textOffsets[ index * 2 + 5  ] = tc[5];
+
+      textOffsets[ index * 2 + 6  ] = tc[4];
+      textOffsets[ index * 2 + 7  ] = tc[5];
+
+      textOffsets[ index * 2 + 8  ] = tc[4];
+      textOffsets[ index * 2 + 9  ] = tc[5];
+
+      textOffsets[ index * 2 + 10 ] = tc[4];
+      textOffsets[ index * 2 + 11 ] = tc[5];
 
     }
 
@@ -285,10 +448,13 @@
     var color       = params.color        || this.color;
     var letterWidth = params.letterWidth  || this.letterWidth ;
     var opacity     = params.opacity      || 1;
+    var side        = params.side         || THREE.DoubleSide;
 
     var attributes = {
       textCoord: { type:"v4" , value: null },
       textOffset: { type:"v2" , value: null },
+      lookup: { type:"v2" , value: null },
+      id: { type:"f" , value: null },
     }
 
    
@@ -334,6 +500,8 @@
       transparent:        trans,
       depthWrite:         depth,
       blending:           blend,
+
+   //   side:               side
 
     });
 
