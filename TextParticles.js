@@ -231,10 +231,10 @@
       var r = tc[4] + tc[2];
 
       // bottom is y offset
-      var b = tc[5] ;
+      var b = tc[5] - tc[3];
 
       // top is y offset + height
-      var t =  tc[5] + tc[3];
+      var t =  tc[5] ;
 
 
 
