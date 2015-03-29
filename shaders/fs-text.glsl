@@ -14,7 +14,7 @@ uniform float glyphBelow;
 
 
 const vec2 textSize = vec2( 16. / 512. , 16./256.);
-const float smoothing = 1. / 4.0;
+const float smoothing = 1. / 2.0;
 
 
 void main(){
@@ -72,7 +72,7 @@ void main(){
 
     col = vec3( 0. , 0. , 0. );
     alpha = 0.;
-    discard;
+   // discard;
   }
 
 

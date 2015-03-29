@@ -10,9 +10,10 @@
 
     <script src="lib/three.min.js">             </script>
     <script src="lib/jquery.min.js">            </script>
-    <script src="lib/TrackballControls.js">     </script>
     <script src="lib/ShaderLoader.js">          </script>
 
+    <script src="ScrollControls.js">            </script>
+    
     <script src="UbuntuMono.js">                </script>
     <script src="TextParticles.js">             </script>
 
@@ -40,9 +41,9 @@
         var h = window.innerHeight;
 
         camera = new THREE.PerspectiveCamera( 65 , w/h , 1 , 2000 );
-        camera.position.z = 1000;
+        camera.position.z = 1;
 
-        controls = new THREE.TrackballControls( camera );
+        controls = new ScrollControls( camera );
         scene = new THREE.Scene();
 
         var dpr = window.devicePixelRatio || 1;
@@ -62,8 +63,14 @@
 
         textParticles = new TextParticles( string , font , vs , fs );
         scene.add( textParticles );
+
+        textParticles.position.x = - textParticles.totalWidth / 2;
         
 
+        controls.minPos = -textParticles.totalHeight;
+        controls.multiplier =  .00001 * textParticles.totalHeight;
+
+        window.addEventListener( 'resize', onWindowResize, false );
 
 
       }
@@ -75,6 +82,17 @@
         controls.update();
         renderer.render( scene , camera );
       }
+
+
+      function onWindowResize() {
+
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+			}
+
 
     </script>
 

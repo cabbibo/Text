@@ -12,9 +12,9 @@
     
     this.texture = this.font.texture; 
     
-    this.letterWidth    = params.letterWidth    || 30;
-    this.lineHeight     = params.lineHeight     || 40;
-    this.lineLength     = params.lineLength     || 20;
+    this.letterWidth    = params.letterWidth    || .02;
+    this.lineHeight     = params.lineHeight     || .05;
+    this.lineLength     = params.lineLength     || 50;
     
     this.width = this.letterWidth * this.lineLength; 
 
@@ -40,6 +40,12 @@
     this.lookupTexture = lookup;
 
     particleSystem.size = lookup.size;
+
+    var lines =  Math.ceil( particles.length / this.lineLength );
+
+    
+    particleSystem.totalWidth  = this.width;
+    particleSystem.totalHeight = lines * this.lineHeight;
 
     return particleSystem;
 
