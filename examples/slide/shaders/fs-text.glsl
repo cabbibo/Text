@@ -29,8 +29,6 @@ void main(){
   float belowP = glyphBelow / totalSize;
 
   float wO = (glyphHeight - glyphWidth)/2.;
-
-
   float wh = glyphWidth / glyphHeight;
 
 

@@ -45,7 +45,6 @@
 
         camera = new THREE.PerspectiveCamera( 65 , w/h , .001 , 4 );
         camera.position.z = 1;
-        camera.position.y = -.4;
 
         controls = new ScrollControls( camera );
         //controls = new THREE.TrackballControls( camera );
@@ -64,6 +63,18 @@
 
         var vs = shaders.vertexShaders.text;
         var fs = shaders.fragmentShaders.text;
+
+
+        title = new TextParticles( "THIS IS BORING" , font , vs , fs , {
+         letterWidth: .1,
+         lineLength: 14  
+        });
+        
+        scene.add( title );
+
+        title.position.x = -title.totalWidth / 2;
+        title.position.z = -.2;
+        title.position.y = .5;
 
 
         // Passage comes from seperate file

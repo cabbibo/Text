@@ -12,7 +12,7 @@
     
     this.texture = this.font.texture; 
     
-    this.letterWidth    = params.letterWidth    || .02;
+    this.letterWidth    = params.letterWidth    || 2.;
     this.lineLength     = params.lineLength     || 50;
     
     this.lineHeight = this.letterWidth * 2.4;
@@ -31,7 +31,6 @@
 
     var particles = this.createParticles( string );
     var lookup    = this.createLookupTexture( particles );
-   // var textCoord = this.createTextCoordTexture( particles );
     var geometry  = this.createGeometry( particles , true );
   
     var material  = this.createMaterial(  lookup , params );
@@ -43,15 +42,8 @@
 
     particleSystem.size = lookup.size;
     particleSystem.lookup = lookup;
-    particleSystem.debug = new THREE.Mesh( 
-        new THREE.PlaneBufferGeometry( 1 , 1 ) ,
-        new THREE.MeshBasicMaterial({
-          map: lookup
-        })
-    );
-
+  
     var lines =  Math.ceil( particles.length / this.lineLength );
-
     
     particleSystem.totalWidth  = this.width;
     particleSystem.totalHeight = lines * this.lineHeight;
@@ -100,7 +92,6 @@
         // Makes sure we don't go over line width
         var newL = counter[0] + l;
         if( newL > this.lineLength ){
-          console.log( 'new line');
           counter[0] = 0;
           counter[1] ++;
         }
@@ -139,37 +130,21 @@
 
     var data = new Float32Array( size * size * 4 );
 
-    console.log( this.letterWidth );
-
-    console.log( size );
-
-    for( var i = 0; i < particles.length; i++ ){
-      var p1 = particles[i]
-      for( var j = i+1; j < particles.length; j++ ){
-        var p2 = particles[j];
-
-        if( p1[1] == p2[1] && p1[2] == p2[2] ){
-          console.log( 'WTF' );
-          console.log( p1 );
-          console.log( p2 );
-        }
-
-      }
-    }
+   
     for( var i = 0; i < size * size; i++ ){
 
       if( particles[i] ){
      
-
-        data[ i * 4 + 0 ] =   particles[i][1] * this.letterWidth * .8;
+        data[ i * 4 + 0 ] =   particles[i][1] * this.letterWidth;
         data[ i * 4 + 1 ] =  -particles[i][2] * this.lineHeight;
 
-        data[ i * 4 + 2 ] = 0; // packing in textCoord 
-        data[ i * 4 + 3 ] = 0; // just cuz!
+        data[ i * 4 + 2 ] = 0;
+        data[ i * 4 + 3 ] = 0;
 
       }
 
     }
+
 
     var f = THREE.RGBAFormat;
     var t = THREE.FloatType;
@@ -196,7 +171,6 @@
     var uvs         = new Float32Array( particles.length * 3 * 2 * 2 );
     var ids         = new Float32Array( particles.length * 3 * 2 * 1 );
   	var textCoords  = new Float32Array( particles.length * 3 * 2 * 4 );
-  	var textOffsets = new Float32Array( particles.length * 3 * 2 * 2 );
   	var lookups     = new Float32Array( particles.length * 3 * 2 * 2 );
 
 
@@ -204,7 +178,6 @@
     var idA     = new THREE.BufferAttribute( ids         , 1 );
     var posA    = new THREE.BufferAttribute( positions   , 3 );
     var coordA  = new THREE.BufferAttribute( textCoords  , 4 );
-    var offsetA = new THREE.BufferAttribute( textOffsets , 2 );
     var lookupA = new THREE.BufferAttribute( lookups     , 2 );
     
     geometry.addAttribute( 'id'         , idA     ); 
@@ -212,7 +185,6 @@
     geometry.addAttribute( 'lookup'     , lookupA ); 
     geometry.addAttribute( 'position'   , posA    ); 
     geometry.addAttribute( 'textCoord'  , coordA  ); 
-    geometry.addAttribute( 'textOffset' , offsetA );
     
     var lookupWidth = Math.ceil( Math.sqrt( particles.length ) ); 
 
@@ -235,13 +207,6 @@
 
       // top is y offset + height
       var t =  tc[5] ;
-
-
-
-      /*var l = -1  * .04;
-      var r =  1  * .04;
-      var t =  1  * .04;
-      var b = -1  * .04;*/
 
       ids[ index + 0 ] = i;
       ids[ index + 1 ] = i;
@@ -303,7 +268,6 @@
       x += .5;
       y += .5;
 
-
       lookups[ index * 2 + 0  ] = x / lookupWidth;
       lookups[ index * 2 + 1  ] = y / lookupWidth;
 
@@ -353,25 +317,6 @@
       textCoords[  index * 4 + 21 ] = tc[1];
       textCoords[  index * 4 + 22 ] = tc[2];
       textCoords[  index * 4 + 23 ] = tc[3];
-
-
-      textOffsets[ index * 2 + 0  ] = tc[4];
-      textOffsets[ index * 2 + 1  ] = tc[5];
-
-      textOffsets[ index * 2 + 2  ] = tc[4];
-      textOffsets[ index * 2 + 3  ] = tc[5];
-
-      textOffsets[ index * 2 + 4  ] = tc[4];
-      textOffsets[ index * 2 + 5  ] = tc[5];
-
-      textOffsets[ index * 2 + 6  ] = tc[4];
-      textOffsets[ index * 2 + 7  ] = tc[5];
-
-      textOffsets[ index * 2 + 8  ] = tc[4];
-      textOffsets[ index * 2 + 9  ] = tc[5];
-
-      textOffsets[ index * 2 + 10 ] = tc[4];
-      textOffsets[ index * 2 + 11 ] = tc[5];
 
     }
 
@@ -440,68 +385,69 @@
   */
   TextParticles.prototype.createMaterial = function( lookup , params ){
 
-    var params = params || {};
-    var dpr       = window.devicePixelRatio || 1;
+    var params      = params || {};
 
     var texture     = params.texture      || this.texture;
     var lookup      = params.lookup       || lookup;
     var color       = params.color        || this.color;
-    var letterWidth = params.letterWidth  || this.letterWidth ;
     var opacity     = params.opacity      || 1;
-    var side        = params.side         || THREE.DoubleSide;
 
     var attributes = {
+
+      id:        { type:"f"  , value: null },
+      lookup:    { type:"v2" , value: null },
       textCoord: { type:"v4" , value: null },
-      textOffset: { type:"v2" , value: null },
-      lookup: { type:"v2" , value: null },
-      id: { type:"f" , value: null },
+
     }
 
    
     var c = new THREE.Color( color );
 
-    var windowSize = new THREE.Vector2( window.innerWidth , window.innerHeight );
-
-    var glyphWidth  = this.font.glyphWidth  / 1024;
-    var glyphHeight = this.font.glyphHeight / 1024;
-    var glyphBelow  = this.font.glyphBelow  / 1024;
 
     var uniforms = {
+      
+      color:        { type:"c"  , value: c            },
 
-      dpr:          { type:"f"  , value: dpr          },
       t_lookup:     { type:"t"  , value: lookup       },
       t_text:       { type:"t"  , value: texture      },
-      color:        { type:"c"  , value: c            },
-      textureSize:  { type:"f"  , value: lookup.size  },
-      windowSize:   { type:"v2" , value: windowSize   },
-      letterWidth:  { type:"f"  , value: letterWidth  },
       opacity:      { type:"f"  , value: opacity      },
-      glyphWidth:   { type:"f"  , value: glyphWidth   }, 
-      glyphHeight:  { type:"f"  , value: glyphHeight  }, 
-      glyphBelow:   { type:"f"  , value: glyphBelow   },
-  
+ 
+      //time: { type:"f" ,value : 1} 
+
     }
+   
+   
+    if( params.uniforms ){
+      for( var propt in params.uniforms ){
+        console.log( params.uniforms );
+        uniforms[ propt ] = params.uniforms[ propt ];
+      }
+    }
+
+    console.log( uniforms );
+
+    var attr  = attributes;
 
     var vert  = this.vertexShader;
     var frag  = this.fragmentShader;
-    var attr  = attributes;
 
     var blend = params.blending       || THREE.AdditiveBlending;
     var depth = params.depthWrite     || false;
     var trans = params.transparent    || true;
+    var side  = params.side           || THREE.DoubleSide;
 
-    material = new THREE.ShaderMaterial({
+    var material = new THREE.ShaderMaterial({
+      
+      attributes:         attr,
 
       uniforms:           uniforms,
-      attributes:         attr,
+      
       vertexShader:       vert,
       fragmentShader:     frag,
 
       transparent:        trans,
       depthWrite:         depth,
       blending:           blend,
-
-   //   side:               side
 
     });
 
