@@ -286,7 +286,7 @@
           link = new Link( font , linkInfo[i].title , linkInfo[i].string );
       
           var p = new THREE.Vector3();
-          p.set( -1.05, (i / linkInfo.length) * 1 -.43 , 0 );
+          p.set( -1.00, (i / linkInfo.length) * 1 -.43 , 0 );
        
           link.add( scene , p );
           links.push( link );
@@ -355,7 +355,7 @@
 
         exampleLinks.position.copy( camera.position );
 
-        v1.set( -1.01 , -.51 , -1 );
+        v1.set( -.96 , -.51 , -1 );
         exampleLinks.position.add( v1);   
                
         
