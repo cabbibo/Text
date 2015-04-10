@@ -1,14 +1,11 @@
 uniform vec3 color;
 uniform sampler2D t_text;
-uniform float opacity;
-uniform float speed; 
+uniform float opacity; 
 
 varying vec4 vTextCoord;
 varying vec2 vUv;
 
 const float smoothing = 1. / 2.0;
-
-$rand
 
 void main(){
 
@@ -22,9 +19,8 @@ void main(){
   vec2 sCoord =  vec2( xF , yF );
   
   vec3 col = color;
- 
-  float add  =speed * 5. * ( 1. + rand( vec2( x , y )));
-  float distance = texture2D( t_text , sCoord + vec2( 0. , add ) ).a;
+  
+  float distance = texture2D( t_text , sCoord ).a;
 
   float lum = smoothstep( 0.4 - smoothing , 0.4 + smoothing , distance );
   float alpha = lum;

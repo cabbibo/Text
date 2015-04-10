@@ -44,9 +44,11 @@
     particleSystem.lookup = lookup;
   
     var lines =  Math.ceil( particles.length / this.lineLength );
-    
+  
+    console.log( particles ); 
+    console.log( particles.numberOfLines ); 
     particleSystem.totalWidth  = this.width;
-    particleSystem.totalHeight = lines * this.lineHeight;
+    particleSystem.totalHeight = particles.numberOfLines * this.lineHeight;
 
     return particleSystem;
 
@@ -105,6 +107,8 @@
         counter[0] ++;
       }
     }
+
+    particles.numberOfLines = counter[1];
 
     return particles;
 

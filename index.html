@@ -4,47 +4,159 @@
     <style>
       body{ margin: 0px; }
       html{ overflow: hidden }
-      a{ display: block }
     </style>
   </head>
 
   <body>
 
+    <script src="lib/three.min.js">             </script>
+    <script src="lib/jquery.min.js">            </script>
+    <script src="lib/ShaderLoader.js">          </script>
 
-    <a href="examples/plain/"> PLAIN </a>
-    <a href="examples/fade/"> FADE </a>
-    <a href="examples/shimmer/"> SHIMMER </a>
-    <a href="examples/slide/"> SLIDE </a>
-    <a href="examples/chaos/"> CHAOS </a>
-    <!--<script src="../../lib/three.min.js">             </script>
-    <script src="../../lib/jquery.min.js">            </script>
-    <script src="../../lib/ShaderLoader.js">          </script>
-
-    <script src="../../lib/ScrollControls.js">        </script>
+    <script src="lib/ScrollControls.js">        </script>
     
-    <script src="../../fonts/UbuntuMono.js">          </script>
-    <script src="../../TextParticles.js">             </script>
+    <script src="fonts/UbuntuMono.js">          </script>
+    <script src="TextParticles.js">             </script>
+    <script src="lib/PhysicsRenderer.js">       </script>
+    <script src="lib/ObjectControls.js">        </script>
+    
 
-    <script src="../../passage.js">                   </script>
+    <script src="text/passage.js"               ></script>
 
-    <script>
+    <script src="js/Link.js"                    ></script>
+    <script src="js/PhysicsText.js"             ></script>
+    
+    <script id = "main" >
 
 
-      var camera, renderer, scene , controls;
+      var camera, renderer, scene , controls , clock;
       
       var textParticles;
 
+      var intersectionPlane;
+      var objectControls;
+
+      var links = [];
+
+      var linkInfo = [];
+
+      var loaded = 0;
+      var neededToLoad = 0;
+
+      linkInfo.push({
+        title: 'Link',
+        file: 'js/Link.js'
+      });
+
+      linkInfo.push({
+        title: 'PhysicsText',
+        file: 'js/PhysicsText.js'
+      });
+
+      linkInfo.push({
+        title: 'Scroll Controls',
+        file: 'lib/ScrollControls.js'
+      });
+
+      linkInfo.push({
+        title: 'Shader Loader',
+        file: 'lib/ShaderLoader.js'
+      });
+
+      linkInfo.push({
+        title: 'Object Controls',
+        file: 'lib/ObjectControls.js'
+      });
+
+
+
+      for( var i  = 0; i < linkInfo.length; i++ ){
+
+        neededToLoad ++;
+
+        var info = linkInfo[i]
+        $.get( info.file , function( data ){
+          this.string = data;
+          console.log( 'INAS');
+          console.log( info );
+          onLoad();
+        }.bind( info ) );
+
+      }
 
       var shaders = new ShaderLoader( 'shaders' );
 
+      neededToLoad ++;
       shaders.shaderSetLoaded = function(){
-        init();
-        animate();
+
+        linkInfo.push({
+          title: 'Text Simulation',
+          string: shaders.ss.text
+        });
+
+
+        linkInfo.push({
+          title: 'Text Vertex Shader',
+          string: shaders.vs.text
+        });
+        
+        linkInfo.push({
+          title: 'Text Fragment Shader',
+          string: shaders.fs.text
+        });
+
+
+       
+        linkInfo.push({
+          title: 'Index',
+          string: document.body.parentNode.innerHTML 
+        });
+
+        linkInfo.push({
+          title: 'Mission Statement',
+          string: passage 
+        });
+
+
+        onLoad();
+
       }
 
-      shaders.load( 'vs-text' , 'text' , 'vertex'   );
-      shaders.load( 'fs-text' , 'text' , 'fragment' );
+      shaders.load( 'ss-text' , 'text' , 'simulation'   );
+      
+      shaders.load( 'vs-text' , 'text' , 'vertex'       );
+      shaders.load( 'fs-text' , 'text' , 'fragment'     );
+      
+      shaders.load( 'vs-title' , 'title' , 'vertex'       );
+      shaders.load( 'fs-title' , 'title' , 'fragment'     );
 
+      var G = {}
+
+      G.speed = { type:"f" , value: 0 };
+      G.dT    = { type:"f" , value: 0 };
+      G.time  = { type:"f" , value: 0 };
+      
+      G.repelerPos = { type:"v3" , value: new THREE.Vector3() }
+      G.repelerVel = { type:"v3" , value: new THREE.Vector3() }
+      
+      var soulUniforms = {
+
+        speed:  G.speed,
+        dT:     G.dT,
+        time:   G.time,
+
+        t_og:       { type:"t" , value: null },
+        repelerPos: G.repelerPos,
+        repelerVel: G.repelerVel
+      }
+
+      var bodyUniforms = {
+        speed:  G.speed,
+        dT:     G.dT,
+        time:   G.time,
+        t_oPos: { type:"t" , value: null }
+      }
+      
       function init(){
 
         var w = window.innerWidth;
@@ -52,8 +164,8 @@
 
         camera = new THREE.PerspectiveCamera( 65 , w/h , .001 , 4 );
         camera.position.z = 1;
-        camera.position.y = -.4;
 
+        clock = new THREE.Clock();
         controls = new ScrollControls( camera );
         //controls = new THREE.TrackballControls( camera );
         scene = new THREE.Scene();
@@ -65,28 +177,47 @@
 
         document.body.appendChild( renderer.domElement );
 
+        /*
+
+           Object Control stuff!!!!
+
+        */ 
+
+        objectControls = new ObjectControls( camera );
+
+
+        var geo = new THREE.PlaneGeometry( 100000 , 100000 );
+        var mat = new THREE.MeshNormalMaterial({side: THREE.DoubleSide});
+        intersectionPlane = new THREE.Mesh( geo , mat );
+        intersectionPlane.visible = false;
+        scene.add( intersectionPlane );
 
 
         var font = UbuntuMono( '../../fonts/UbuntuMono.png' );
 
         var vs = shaders.vertexShaders.text;
         var fs = shaders.fragmentShaders.text;
+        var ss = shaders.simulationShaders.text;
 
 
-        // Passage comes from seperate file
-        textParticles = new TextParticles( passage , font , vs , fs , {
-         letterWidth: .02,
-         lineLength: 80   
-        });
+
+        for( var i = 0; i < linkInfo.length; i++ ){
+
+          //console.log( linkInfo[i].title );
+          //console.log( linkInfo[i].string );
+          link = new Link( font , linkInfo[i].title , linkInfo[i].string );
+      
+          var p = new THREE.Vector3();
+          p.set( -1.1, (i / linkInfo.length) * 1 -.5 , 0 );
+       
+          link.add( scene , p );
+          links.push( link );
+
+
+        }
+
+        links[0].select();
         
-        scene.add( textParticles );
-
-        textParticles.position.x = - textParticles.totalWidth / 2;
-
-        controls.minPos     = -textParticles.totalHeight * 1.2;
-        controls.maxPos     =  0;
-        controls.multiplier =  .000003 * textParticles.totalHeight;
-        controls.dampening  = .95;
 
         window.addEventListener( 'resize', onWindowResize, false );
 
@@ -97,7 +228,29 @@
 
         requestAnimationFrame( animate );
         controls.update();
+        G.speed.value = controls.speed;
+        G.dT.value = clock.getDelta();
+        G.time.value += G.dT.value;
+      
+        objectControls.update();
+
+        var raycaster = objectControls.raycaster;
+        var i = raycaster.intersectObject( intersectionPlane );
+
+        if( !i[0] ){ 
+          console.log( 'something is terribly wrong' );
+        }else{
+          G.repelerVel.value.copy( G.repelerPos.value );
+          G.repelerPos.value.copy( i[0].point );
+          G.repelerVel.value.sub( G.repelerPos.value );
+        } 
+        
+        for( var i = 0; i< links.length; i++ ){
+          links[i].update();        
+        }        
+        
         renderer.render( scene , camera );
+
       }
 
 
@@ -110,7 +263,18 @@
 
 			}
 
-    </script>-->
+      function onLoad(){
+
+        loaded ++;
+        if( loaded == neededToLoad ){
+
+          init();
+          animate();
+
+        }
+      }
+
+    </script>
 
   </body>
 </html>
