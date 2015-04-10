@@ -12,7 +12,13 @@ varying vec3 vMPos;
 
 const float smoothing = 1. / 8.0;
 
-$hsv
+vec3 hsv(float h, float s, float v)
+{
+    
+  return mix( vec3( 1.0 ), clamp( ( abs( fract(
+    h + vec3( 3.0, 2.0, 1.0 ) / 3.0 ) * 6.0 - 3.0 ) - 1.0 ), 0.0, 1.0 ), s ) * v;
+}
+
 void main(){
 
 
@@ -26,7 +32,7 @@ void main(){
 
   vec2 sCoord =  vec2( xF , yF );
 
-  vec3 col = vNorm * .5 + .5;
+  vec3 col = hsv( abs(sin(vDist * 100. )) , 1. , 1.);
   
   float distance = texture2D( t_text , sCoord ).a;
 
@@ -36,7 +42,7 @@ void main(){
   if( distance < .1 ){  alpha = 0.; }
  
 
-  gl_FragColor = vec4(col * pow( vDist , 100. ) , alpha * opacity );
+  gl_FragColor = vec4(col , alpha * opacity );
 
 
 }
