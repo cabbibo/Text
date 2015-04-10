@@ -13,8 +13,25 @@ function PhysicsText( soulParams , bodyParams ){
 
   this.soul.setUniforms( soulParams.uniforms );
 
+  this.bodyUniforms = {}
 
-  this.bodyUniforms = bodyParams.params.uniforms;
+  var i = new THREE.Matrix4();
+  this.bodyMatrix = {  type:"m4" , value: i };
+
+
+  for( var propt in bodyParams.params.uniforms ){
+
+    this.bodyUniforms[ propt ] = bodyParams.params.uniforms[ propt ];
+
+  }
+
+  this.bodyUniforms.bodyMatrix = this.bodyMatrix;
+
+  console.log('bs');
+  console.log( this.bodyUniforms );
+  console.log( bodyParams.params.uniforms );
+
+  bodyParams.params.uniforms = this.bodyUniforms;
 
   this.body = new TextParticles(
     bodyParams.string,
@@ -26,9 +43,6 @@ function PhysicsText( soulParams , bodyParams ){
 
   this.bodyUniforms = this.body.material.uniforms;
 
-  var i = new THREE.Matrix4();
-  i.getInverse( this.body.matrixWorld );
-  this.bodyMatrix = {  type:"m4" , value: i };
 
   this.soul.setUniform( 't_og' , { type:"t" , value: this.body.lookup } );
   this.soul.setUniform( 'bodyMatrix' , this.bodyMatrix );

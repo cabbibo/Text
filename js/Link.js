@@ -67,7 +67,7 @@ function Link( font , title , string ){
         vs:vs , 
         fs:fs , 
         params:{
-          letterWidth: .02,
+          letterWidth: .016,
           lineLength: 80,
           uniforms: this.bodyUniforms 
 
@@ -78,14 +78,26 @@ function Link( font , title , string ){
 
   this.bg = new THREE.Mesh(
     new THREE.PlaneGeometry( 1 , 1 ),  
-    new THREE.MeshBasicMaterial({color:0x444444})
+    new THREE.MeshPhongMaterial({
+      color:0x444444,
+      emissive:0x222222,
+      specular: 0xffffff,
+      shininess:4
+
+    })
   );
 
   this.bg.hoverOver = function(){
-    if( this.selected == false ){ this.material.color.setHex( 0x888888 ) }
+    if( this.selected == false ){ 
+      this.material.color.setHex( 0x888888 )
+      this.material.emissive.setHex( 0x888888 )
+    }
   }
   this.bg.hoverOut  = function(){
-    if( this.selected == false ){ this.material.color.setHex( 0x444444 ) }
+    if( this.selected == false ){
+      this.material.color.setHex( 0x444444 ) 
+      this.material.emissive.setHex( 0x444444 ) 
+    }
   }
 
   this.bg.select = function(){
@@ -151,7 +163,7 @@ Link.prototype.add = function( scene , position ){
   scene.add( this.body );
   scene.add( this.string.body );
 
-  this.string.body.position.x = - this.string.body.totalWidth / 3;
+  this.string.body.position.x = - this.string.body.totalWidth / 2.5;
 
   this.string.updateMatrices();
 
@@ -171,12 +183,14 @@ Link.prototype.select = function(){
  // camera.position.y = 0;
 
   controls.minPos     = -this.string.body.totalHeight ;
-  controls.maxPos     =  0;
+  controls.maxPos     =  -.5;
   controls.multiplier =  .000003 * this.string.body.totalHeight;
   controls.dampening  = .95;
 
   this.bg.selected = true;
   this.bg.material.color.setHex( 0x44aa44 )
+  this.bg.material.emissive.setHex( 0x44aa44 ) 
+    
  
 
 }
@@ -185,6 +199,8 @@ Link.prototype.deselect = function(){
 
   this.bg.selected = false;
   this.bg.material.color.setHex( 0x444444 )
+  this.bg.material.emissive.setHex( 0x444444 ) 
+    
   this.selected.value = 0; 
 
 }

@@ -1,5 +1,8 @@
 <html>
 
+
+
+
   <head>
     <style>
       body{ margin: 0px; }
@@ -9,22 +12,72 @@
 
   <body>
 
+
+    <!--
+
+
+        Why hello there!
+
+        It seems like you're exploring some weird text!
+      
+        The point of this project is not to make text
+        that is useful, or even pretty, but just to 
+        see what happens when you start using WebGL
+        for text instead of HTML. 
+      
+        As you can see, its pretty powerful!
+
+
+        On the left you will see all the files used
+        to create this page, excluding jquery and 
+        three.js . You can actually render out both
+        of these pieces of text, but for the sake of
+        conciseness, I've choosen not to.
+
+        If you want to play with the code, make sure 
+        to check out the github link on the right!
+
+        There are a bunch of examples to you can find
+        by clicking the colored squares at the bottom.
+
+
+        Also! Please keep in mind that I'm a pretty 
+        shit coder, so if you are trying to use code,
+        its probably better to get it from the examples
+        rather than this page, because this page was
+        hacked together in a day. TextParticles.js is
+        probably the cleanest of all the code.
+
+
+        Have fun & Thanks for visting
+
+        
+        
+
+                                      - Cabbibo
+        
+
+
+    -->
+
     <script src="lib/three.min.js">             </script>
     <script src="lib/jquery.min.js">            </script>
+
     <script src="lib/ShaderLoader.js">          </script>
 
     <script src="lib/ScrollControls.js">        </script>
-    
-    <script src="fonts/UbuntuMono.js">          </script>
-    <script src="TextParticles.js">             </script>
-    <script src="lib/PhysicsRenderer.js">       </script>
     <script src="lib/ObjectControls.js">        </script>
     
-
-    <script src="text/passage.js"               ></script>
-
+    <script src="lib/PhysicsRenderer.js">       </script>
+    
+    <script src="fonts/UbuntuMono.js">          </script>
+    
     <script src="js/Link.js"                    ></script>
     <script src="js/PhysicsText.js"             ></script>
+    <script src="js/SocialLinks.js"             ></script>
+    <script src="js/ExampleLinks.js"            ></script>
+    
+    <script src="TextParticles.js">             </script>
     
     <script id = "main" >
 
@@ -44,8 +97,24 @@
       var neededToLoad = 0;
 
       linkInfo.push({
+        title: 'Social Links',
+        file: 'js/SocialLinks.js'
+      });
+
+      linkInfo.push({
+        title: 'Example Links',
+        file: 'js/SocialLinks.js'
+      });
+
+      linkInfo.push({
         title: 'Link',
         file: 'js/Link.js'
+      });
+
+
+      linkInfo.push({
+        title: 'Ubuntu Mono',
+        file: 'fonts/UbuntuMono.js'
       });
 
       linkInfo.push({
@@ -66,6 +135,12 @@
       linkInfo.push({
         title: 'Object Controls',
         file: 'lib/ObjectControls.js'
+      });
+
+
+      linkInfo.push({
+        title: 'Text Particles',
+        file: 'TextParticles.js'
       });
 
 
@@ -106,18 +181,12 @@
         });
 
 
-       
         linkInfo.push({
           title: 'Index',
           string: document.body.parentNode.innerHTML 
         });
 
-        linkInfo.push({
-          title: 'Mission Statement',
-          string: passage 
-        });
-
-
+       
         onLoad();
 
       }
@@ -154,9 +223,13 @@
         speed:  G.speed,
         dT:     G.dT,
         time:   G.time,
-        t_oPos: { type:"t" , value: null }
+        t_oPos: { type:"t" , value: null },
+        repelerPos: G.repelerPos,
+
       }
       
+      var v1 = new THREE.Vector3();
+
       function init(){
 
         var w = window.innerWidth;
@@ -177,6 +250,7 @@
 
         document.body.appendChild( renderer.domElement );
 
+      
         /*
 
            Object Control stuff!!!!
@@ -189,9 +263,13 @@
         var geo = new THREE.PlaneGeometry( 100000 , 100000 );
         var mat = new THREE.MeshNormalMaterial({side: THREE.DoubleSide});
         intersectionPlane = new THREE.Mesh( geo , mat );
-        intersectionPlane.visible = false;
+        intersectionPlane.visible = false;  
+        intersectionPlane.position.z = .05
         scene.add( intersectionPlane );
 
+
+        light = new THREE.PointLight( 0xffffff , 1. , 1 );
+        scene.add( light );
 
         var font = UbuntuMono( 'fonts/UbuntuMono.png' );
 
@@ -208,7 +286,7 @@
           link = new Link( font , linkInfo[i].title , linkInfo[i].string );
       
           var p = new THREE.Vector3();
-          p.set( -1.1, (i / linkInfo.length) * 1 -.5 , 0 );
+          p.set( -1.05, (i / linkInfo.length) * 1 -.43 , 0 );
        
           link.add( scene , p );
           links.push( link );
@@ -216,8 +294,25 @@
 
         }
 
-        links[0].select();
+        links[links.length-1].select();
         
+
+
+        socialLinks = SocialLinks();
+
+        socialLinks.position.x = 1.;
+        socialLinks.scale.multiplyScalar( .13 );
+
+      
+        scene.add( socialLinks );
+
+        exampleLinks = ExampleLinks();
+
+        exampleLinks.position.x = 1.;
+        exampleLinks.position.y = -.5;
+        exampleLinks.scale.multiplyScalar( .074);
+
+        scene.add( exampleLinks );
 
         window.addEventListener( 'resize', onWindowResize, false );
 
@@ -243,11 +338,26 @@
           G.repelerVel.value.copy( G.repelerPos.value );
           G.repelerPos.value.copy( i[0].point );
           G.repelerVel.value.sub( G.repelerPos.value );
-        } 
+        }
+
+        light.position.copy( G.repelerPos.value ); 
         
         for( var i = 0; i< links.length; i++ ){
           links[i].update();        
-        }        
+        }     
+
+
+        socialLinks.position.copy( camera.position );
+
+        v1.set( 1. , -.2 , -1 );
+        socialLinks.position.add( v1); 
+
+
+        exampleLinks.position.copy( camera.position );
+
+        v1.set( -1.01 , -.51 , -1 );
+        exampleLinks.position.add( v1);   
+               
         
         renderer.render( scene , camera );
 
