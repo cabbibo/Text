@@ -3,7 +3,7 @@ function SocialLinks(){
 
 
   var gh ="https://github.com/cabbibo/Text/tree/gh-pages"
-  var t = "http://twitter.com/share?text=%23FuckTheDOM%20:%20&url=http://cabbi.bo/Text/"
+  var t = "http://twitter.com/share?text=Look%20Mom%20No%20HTML%21%20:%20&url=http://cabbi.bo/Text/%20(%20by%20@cabbibo%20)"
   var links = [
 
     [ "img/icons/twitter_2.png" , t  ],
