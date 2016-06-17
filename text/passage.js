@@ -12,6 +12,8 @@
     To such men the desperate and horrible thought has come that perhaps the whole of human life is but a bad joke, a violent and ill-fated abortion of the primal mother, a savage and dismal catastrophe of nature. To them too, however, the other thought has come that man is perhaps not merely a half-rational animal, but a child of the gods an destined to immortality.
 
 
-   - Hermann Hesse ,  "Steppenwolf"
+
+
+                        - Hermann Hesse ,  "Steppenwolf"
 
  `

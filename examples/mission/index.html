@@ -15,19 +15,22 @@
 
     <script src="../../lib/ScrollControls.js">        </script>
     
-    <script src="../../fonts/UbuntuMono.js">          </script>
+    <script src="../../fonts/PTMono.js">              </script>
     <script src="../../TextParticles.js">             </script>
 
-    <script src="../../passage.js">                   </script>
+    <script src="../../text/passage.js">              </script>
 
     <script>
 
+      var T = THREE;
 
-      var camera, renderer, scene , controls;
+
+      var camera, renderer, scene , controls , clock;
       
       var textParticles;
 
 
+      var time = { type:"f" , value: 1 }
       var shaders = new ShaderLoader( 'shaders' );
 
       shaders.shaderSetLoaded = function(){
@@ -38,12 +41,6 @@
       shaders.load( 'vs-text' , 'text' , 'vertex'   );
       shaders.load( 'fs-text' , 'text' , 'fragment' );
 
-      var uniforms = {
-
-        speed:{ type:"f" , value: 0 }
-
-      }
-
       function init(){
 
         var w = window.innerWidth;
@@ -53,8 +50,11 @@
         camera.position.z = 1;
 
         controls = new ScrollControls( camera );
-        //controls = new THREE.TrackballControls( camera );
+        
+        clock = new THREE.Clock();
+        
         scene = new THREE.Scene();
+
 
         var dpr = window.devicePixelRatio || 1;
         renderer = new THREE.WebGLRenderer();
@@ -65,37 +65,45 @@
 
 
 
-        var font = UbuntuMono( '../../fonts/UbuntuMono.png' );
+        var font = PTMono( '../../fonts/PTMono.png' );
 
         var vs = shaders.vertexShaders.text;
         var fs = shaders.fragmentShaders.text;
 
 
-        title = new TextParticles( "SPACE PUPPY MISSION STATEMENT" , font , vs , fs , {
+        title = new TextParticles( "Less Boring, But Still Boring" , font , vs , fs , {
          letterWidth: .05,
          lineLength: 29,
-         uniforms: uniforms
+         uniforms:{
+          time: time,
+         }  
         });
         
-        scene.add( title );
 
         title.position.x = -title.totalWidth / 2;
-        title.position.z = -.2;
+       // title.position.z = -.2;
         title.position.y = .3;
+
+
 
 
         // Passage comes from seperate file
         textParticles = new TextParticles( passage , font , vs , fs , {
          letterWidth: .02,
          lineLength: 80,
-         uniforms: uniforms  
+         uniforms:{
+          time: time,
+         }  
         });
         
         scene.add( textParticles );
+        scene.add( title );
+
+        //textParticles.material.uniforms.time.value = 1.;
 
         textParticles.position.x = - textParticles.totalWidth / 2;
 
-        controls.minPos     = -textParticles.totalHeight * 1.4;
+        controls.minPos     = -textParticles.totalHeight * 1.2;
         controls.maxPos     =  0;
         controls.multiplier =  .000003 * textParticles.totalHeight;
         controls.dampening  = .95;
@@ -108,8 +116,10 @@
       function animate(){
 
         requestAnimationFrame( animate );
+
+        time.value += clock.getDelta();
+
         controls.update();
-        uniforms.speed.value = controls.speed;
         renderer.render( scene , camera );
 
       }
