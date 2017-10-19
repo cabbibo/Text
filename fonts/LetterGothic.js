@@ -1,7 +1,7 @@
 
 var LetterGothic = function( path ){
 
-  var texture = new THREE.ImageUtils.loadTexture( path );
+  var texture = new THREE.TextureLoader().load( path );
   texture.flipY = false;
         
   return {

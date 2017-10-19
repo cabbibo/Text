@@ -392,14 +392,6 @@
     var color       = params.color        || this.color;
     var opacity     = params.opacity      || 1;
 
-    var attributes = {
-
-      id:        { type:"f"  , value: null },
-      lookup:    { type:"v2" , value: null },
-      textCoord: { type:"v4" , value: null },
-
-    }
-
    
     var c = new THREE.Color( color );
 
@@ -426,8 +418,6 @@
 
     console.log( uniforms );
 
-    var attr  = attributes;
-
     var vert  = this.vertexShader;
     var frag  = this.fragmentShader;
 
@@ -438,8 +428,6 @@
 
     var material = new THREE.ShaderMaterial({
       
-      attributes:         attr,
-
       uniforms:           uniforms,
       
       vertexShader:       vert,
